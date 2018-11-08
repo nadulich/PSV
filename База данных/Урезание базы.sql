@@ -1,15 +1,54 @@
+-- Посказка: чтобы выполнить часть скрипта - выделите нужное и нажмите "Выполнить"
+
+
+-- Обрезаем файл журнала транзакций
+
 use master
 go
 
-ALTER DATABASE [psvbuh_test4] SET RECOVERY SIMPLE
+ALTER DATABASE <ИмяВашейБазы, varchar(30),> SET RECOVERY SIMPLE
 go
-use psvbuh_test4
+use <ИмяВашейБазы, varchar(30),>
 go
 DBCC SHRINKFILE (2, 10)
 GO
 
---ПРОИЗВОДСТВО
 
+--Очищаем журналы и логи
+
+use <ИмяВашейБазы, varchar(30),>
+go
+truncate table dbo._Reference60			--Журнал изменений объектов AEMZ
+truncate table dbo._Reference60_VT1359  --его табличная часть
+
+truncate table dbo._Reference61			--Журнал изменений регистров AEMZ
+truncate table dbo._Reference61_VT1375  --его табличная часть
+truncate table dbo._Reference61_VT1382  --его табличная часть
+
+truncate table dbo._InfoRg17554			--замеры времени
+truncate table dbo._InfoRg19195			--Время выполнения отчетов
+
+truncate table _inforg31991 --РС версии объектов
+
+DBCC SHRINKFILE (2, 10)     --еще раз обрежем лог
+GO
+
+
+
+--ЗАРПЛАТА--
+--Кто не работает с зарплатой - может очистить большие зарплатные таблицы 
+truncate table dbo._InfoRg28617 --табель
+truncate table dbo._InfoRg28635 --Предварительный табель (неявки)
+truncate table dbo._InfoRg28134 --Индивидуальные графики (ЗП)
+
+
+
+
+
+--ПРОИЗВОДСТВО
+--Кто не работает с производством - может немного подчистить данные производства
+
+--ВНИМАНИЕ! Запросы ниже могут выполняться длительное время.
 
 delete top (100000) t
 --select count(*) 
@@ -31,56 +70,9 @@ from _InfoRg35903 t where t._Period < '40180401' --доп сведения ДН�
 go 50
 --truncate table dbo._InfoRg35903
 
-
-
-
---ЗАРПЛАТА--
-truncate table dbo._InfoRg28617 --табель
-truncate table dbo._InfoRg28635 --Предварительный табель (неявки)
-truncate table dbo._InfoRg28134 --Индивидуальные графики (ЗП)
-
---ОБЩЕЕ
-truncate table dbo._Reference60			--AEMZ
-truncate table dbo._Reference60_VT1359
-
-truncate table dbo._Reference61			--AEMZ
-truncate table dbo._Reference61_VT1375
-truncate table dbo._Reference61_VT1382
-
-truncate table dbo._InfoRg17554			--замеры времени
-truncate table dbo._InfoRg19195			--Время выполнения отчетов
-
-truncate table _inforg31991 --РС версии объектов
-
-DBCC SHRINKFILE (2, 10)
+DBCC SHRINKFILE (2, 10)     --еще раз обрежем лог
 GO
 
 
-
-_AccumRg21996 - ДНП
-
-
-
-
-
-
-if exists(select name from tempdb..sysobjects where name='#tmp')
-drop table #tmp
-
-SELECT *
-into #tmp
--- Select Count(*)
-FROM _InfoRg31656
-WHERE _Period >= '40180901'
-
-truncate table _InfoRg31656
-
-insert into _InfoRg31656 
-select * from #tmp
-
-drop table #tmp
-go
-
-
-
-
+-- _AccumRg21996 - ДНП
+-- Таблица большая, ее не усекал
